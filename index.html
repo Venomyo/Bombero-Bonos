@@ -11,7 +11,7 @@
     .subtitle {text-align:center; color:#e74c3c; font-size: 1.4em; margin-top: -10px;}
     .controls {text-align:center; margin:40px 0; white-space: nowrap; overflow-x: auto; padding:10px 0;}
     .filter-btn {
-      display:inline-block; padding:14px 20px; margin:0 8px; background:#3498db; color:white; 
+      display:inline-block; padding:14px 20px; margin:0 8px; background:#3498db; color:white;
       border:none; border-radius:12px; cursor:pointer; font-size:18px; font-weight:bold; min-width:120px;
     }
     .filter-btn.active {background:#e74c3c; transform:scale(1.05);}
@@ -21,8 +21,8 @@
     table {width:100%; border-collapse:collapse; background:white; box-shadow:0 6px 25px rgba(0,0,0,0.15); border-radius:14px; overflow:hidden; margin-top:20px;}
     th {background:#3498db; color:white; padding:16px; position:sticky; top:0; cursor:pointer; user-select:none;}
     th:hover {background:#2980b9;}
-    th.sort-asc::after {content:" ▲"; margin-left:8px;}
-    th.sort-desc::after {content:" ▼"; margin-left:8px;}
+    th.sort-asc::after {content:" Up Arrow"; margin-left:8px;}
+    th.sort-desc::after {content:" Down Arrow"; margin-left:8px;}
     td {padding:14px; border-bottom:1px solid #ddd; vertical-align: top;}
     tbody tr:nth-child(2n) {background-color: #e3f2fd;}
     tbody tr:nth-child(2n+1) {background-color: #ffffff;}
@@ -37,7 +37,6 @@
 <body>
   <h1>Bono Contribución Bomberos 2025</h1>
   <div class="subtitle">Concepción del Uruguay</div>
-
   <div class="controls" id="botones-patas">
     <button class="filter-btn active" data-pata="todas"><span>TODAS</span><span class="cantidad" id="cant-todas"> (0)</span></button>
     <button class="filter-btn" data-pata="1"><span>PATA 1</span><span class="cantidad" id="cant-1"> (0)</span></button>
@@ -47,11 +46,11 @@
     <button class="filter-btn" data-pata="5"><span>PATA 5</span><span class="cantidad" id="cant-5"> (0)</span></button>
     <button class="filter-btn" data-pata="6"><span>PATA 6</span><span class="cantidad" id="cant-6"> (0)</span></button>
   </div>
-  
+ 
   <div class="search">
-    <input type="text" id="buscar" placeholder="🔍 Número exacto (ej: 6803) | Dirección | Nombre | Zona | Cobrador...">
+    <input type="text" id="buscar" placeholder="Número (ej: 83 → todos los xx83) | Dirección | Nombre | Zona | Cobrador...">
   </div>
-  
+ 
   <table id="tabla">
     <thead>
       <tr>
@@ -70,7 +69,7 @@
     </thead>
     <tbody></tbody>
   </table>
-  
+ 
   <div class="footer">
     Total: <strong id="total">0</strong> bonos | Mostrando: <strong id="vistos">0</strong>
   </div>
@@ -92,7 +91,6 @@
     let ordenActual = { col: null, asc: true };
     const cantidades = {todas: 0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
 
-    // ==================== ACTUALIZAR CONTADORES ====================
     function actualizarContadores() {
       cantidades.todas = filas.length;
       document.getElementById("cant-todas").textContent = ` (${cantidades.todas})`;
@@ -102,7 +100,7 @@
       document.getElementById("total").textContent = cantidades.todas;
     }
 
-    // ==================== ORDENAMIENTO ====================
+    // ORDENAMIENTO
     document.querySelectorAll("th.sortable").forEach(th => {
       th.addEventListener("click", () => {
         const col = th.dataset.col;
@@ -114,8 +112,9 @@
 
     function ordenarTabla() {
       document.querySelectorAll("th.sortable").forEach(t => t.classList.remove("sort-asc", "sort-desc"));
-      document.querySelector(`th[data-col="${ordenActual.col}"]`).classList.add(ordenActual.asc ? "sort-asc" : "sort-desc");
-
+      if (ordenActual.col) {
+        document.querySelector(`th[data-col="${ordenActual.col}"]`).classList.add(ordenActual.asc ? "sort-asc" : "sort-desc");
+      }
       filas.sort((a, b) => {
         let A, B;
         if (ordenActual.col === "talon") {
@@ -126,15 +125,16 @@
           A = a.children[map[ordenActual.col]].textContent.trim().toLowerCase();
           B = b.children[map[ordenActual.col]].textContent.trim().toLowerCase();
         }
-        if (!isNaN(A) && !isNaN(B) && A !== "" && B !== "") return ordenActual.asc ? (Number(A)-Number(B)) : (Number(B)-Number(A));
+        if (!isNaN(A) && !isNaN(B) && A !== "" && B !== "") {
+          return ordenActual.asc ? (Number(A)-Number(B)) : (Number(B)-Number(A));
+        }
         return ordenActual.asc ? A.localeCompare(B) : B.localeCompare(A);
       });
-
       filas.forEach(tr => tbody.appendChild(tr));
       aplicarFiltros();
     }
 
-    // ==================== CARGA DE DATOS ====================
+    // CARGA DE DATOS
     patas.forEach(pata => {
       Papa.parse(pata.url, {
         download: true,
@@ -142,13 +142,11 @@
         complete: function(results) {
           results.data.forEach(fila => {
             if (!fila[0] || fila[0] === "Talones" || !/^\d{4}$/.test(fila[0].trim())) return;
-
             const talonesArray = fila.slice(0, pata.talones).map(t => t.trim()).filter(t => /^\d{4}$/.test(t));
             if (talonesArray.length === 0) return;
 
             const primerTalon = talonesArray[0];
             const talonesHtml = talonesArray.map(t => `<span class="talon-badge">${t}</span>`).join("");
-
             let col = pata.talones;
             while (col < fila.length && (!fila[col] || fila[col].trim() === "")) col++;
             const nombre = (fila[col] || "").trim() || "-";
@@ -180,18 +178,15 @@
             `;
             tbody.appendChild(tr);
             filas.push(tr);
-
-            // Contador por pata
             cantidades[pata.num]++;
           });
-
           actualizarContadores();
           aplicarFiltros();
         }
       });
     });
 
-    // ==================== BUSCADOR ====================
+    // BUSCADOR MEJORADO
     function aplicarFiltros() {
       const texto = inputBuscar.value.trim();
       const textoLower = texto.toLowerCase().replace(/\s+/g, " ");
@@ -210,25 +205,43 @@
           return;
         }
 
+        // BÚSQUEDA POR NÚMERO (1 a 4 dígitos)
         if (/^\d{1,4}$/.test(texto)) {
-          const numeroBuscado = texto.padStart(4, "0");
+          const busqueda = texto;
           const numerosFila = JSON.parse(tr.dataset.numeros);
-          const encontrado = numerosFila.includes(numeroBuscado);
+          let encontrado = false;
+
+          if (busqueda.length >= 3) {
+            // Con 3 o 4 dígitos: busca los últimos 3 (o 4) dígitos
+            const padded = busqueda.padStart(4, "0");
+            encontrado = numerosFila.some(talon => 
+              talon.slice(-3) === padded.slice(-3) || 
+              talon === padded
+            );
+          } else {
+            // Con 1 o 2 dígitos: busca los últimos 2
+            const terminacion = busqueda.padStart(2, "0").slice(-2);
+            encontrado = numerosFila.some(talon => talon.endsWith(terminacion));
+          }
+
           tr.style.display = encontrado ? "" : "none";
           if (encontrado) visibles++;
-        } else {
+        } 
+        // BÚSQUEDA POR TEXTO (nombre, dirección, etc.)
+        else {
           const contenido = tr.textContent.toLowerCase().replace(/\s+/g, " ");
           const coincide = contenido.includes(textoLower);
           tr.style.display = coincide ? "" : "none";
           if (coincide) visibles++;
         }
       });
+
       document.getElementById("vistos").textContent = visibles;
     }
 
     inputBuscar.addEventListener("input", aplicarFiltros);
 
-    // Botones de pata
+    // BOTONES DE PATA
     document.querySelectorAll(".filter-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
